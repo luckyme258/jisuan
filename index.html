@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计件宝</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #e9ecef;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            width: 100%; max-width: 700px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; padding: 0 4px;
+        }
+        .top-bar .brand { font-size: 18px; font-weight: 700; color: #000000; }
+        .top-bar .worker-tag {
+            font-size: 14px; color: #000000; background: #ffffff;
+            padding: 6px 14px; border-radius: 20px; cursor: pointer;
+            border: 1px dashed #bdc3c7;
+        }
+        .top-bar .worker-tag:hover { background: #f1f2f6; }
+
+        .book-bar {
+            width: 100%; max-width: 700px;
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 12px;
+            background: #ffffff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            flex-wrap: wrap;
+        }
+        .book-bar .label { font-size: 14px; color: #555; margin-right: 4px; }
+        .book-bar select {
+            flex: 1; min-width: 140px;
+            font-size: 15px; padding: 8px 10px;
+            border: 1px solid #dcd3b8; border-radius: 8px;
+            background: #fffdf5; outline: none; color: #000000;
+        }
+        .book-bar button {
+            padding: 8px 14px; cursor: pointer;
+            background: #ffffff; color: #333;
+            border: 1px solid #dcd3b8; border-radius: 8px;
+            font-size: 14px;
+        }
+        .book-bar button:hover { background: #f1f2f6; }
+        .book-bar button.primary { background: #3498db; color: #fff; border-color: #3498db; }
+        .book-bar button.primary:hover { background: #2980b9; }
+
+        .settings-panel {
+            width: 100%; max-width: 700px;
+            background: #ffffff;
+            border: 1px solid #e0d8c3;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .settings-panel.open { display: block; }
+        .settings-row {
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #e0d8c3;
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .settings-row button {
+            padding: 8px 14px; cursor: pointer;
+            background: #6c757d; color: #fff;
+            border: none; border-radius: 8px; font-size: 13px;
+        }
+        .settings-row button:hover { opacity: 0.9; }
+        .settings-row .danger-text {
+            color: #c0392b;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #f5c6c6;
+            background: #fff5f5;
+        }
+        .settings-row .danger-text:hover { background: #ffe0e0; }
+
+        .paper-container {
+            background-color: #fffdf5; width: 100%; max-width: 700px;
+            padding: 30px 40px 40px 40px; border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e0d8c3; position: relative;
+            background-image: repeating-linear-gradient(
+                transparent, transparent 44px, #e8e0cc 44px, #e8e0cc 45px
+            );
+        }
+
+        .config-area {
+            display: flex; gap: 30px; align-items: center;
+            margin-bottom: 10px; padding-bottom: 15px;
+            border-bottom: 2px dashed #dcd3b8;
+        }
+        .config-item { display: flex; align-items: center; gap: 8px; }
+        .config-item label { font-size: 14px; font-weight: 600; color: #000000; }
+        .config-item select {
+            font-size: 16px; padding: 4px 8px; border: 1px solid #dcd3b8; border-radius: 6px; background: #fff; outline: none; color: #000000;
+        }
+        .config-item input {
+            width: 70px; font-size: 16px; padding: 4px 8px;
+            border: 1px solid #dcd3b8; border-radius: 6px; background: #fff;
+            outline: none; text-align: center; color: #000000; font-weight: bold;
+        }
+
+        .title-wrapper { margin-bottom: 10px; margin-top: 15px; display: flex; gap: 15px; align-items: center;}
+        .title-input {
+            flex: 1; font-size: 20px; font-weight: 700; border: none; background: transparent;
+            border-bottom: 2px dashed #dcd3b8; outline: none; padding: 8px 0; color: #000000;
+        }
+        .title-input:focus { border-bottom-color: #3498db; }
+
+        .row-container {
+            display: flex; align-items: center; height: 45px; position: relative;
+        }
+
+        .sum-column {
+            width: 80px; text-align: right; padding-right: 15px;
+            font-family: 'Courier New', monospace; font-weight: 700; font-size: 18px;
+            color: #c0392b; display: flex; align-items: center; justify-content: flex-end;
+        }
+        .sum-column.total-header {
+            font-size: 16px; color: #000000;
+            border-bottom: 2px solid #000000;
+            height: 45px; align-items: flex-end; padding-bottom: 4px;
+        }
+
+        .input-column { flex: 1; display: flex; align-items: center; height: 100%; }
+        .input-column input {
+            width: 100%; border: none; background: transparent;
+            font-size: 18px; font-family: 'Courier New', monospace;
+            outline: none; padding: 0 10px; color: #000000; letter-spacing: 1px;
+        }
+        .input-column input::placeholder { color: #666666; font-style: italic; font-size: 16px; }
+
+        .add-row-btn {
+            margin-top: 15px; width: 100%; padding: 12px;
+            background: #f8f9fa; border: 2px dashed #dcd3b8;
+            cursor: pointer; font-size: 15px; color: #000000; border-radius: 8px;
+        }
+        .add-row-btn:hover { border-color: #3498db; color: #3498db; }
+
+        .summary-bar {
+            margin-top: 25px; padding-top: 15px;
+            border-top: 3px double #dcd3b8;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .summary-row {
+            display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+            font-size: 18px; font-weight: 700; color: #000000; font-family: 'Courier New', monospace;
+        }
+        .summary-row .total-count { color: #000000; }
+        .summary-row .unit-price { color: #000000; }
+        .summary-row .total-salary { color: #c0392b; font-size: 22px; }
+
+        .grand-row {
+            display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+            padding-top: 12px;
+            border-top: 1px dashed #dcd3b8;
+            font-size: 17px;
+            font-weight: 700;
+            color: #000000;
+            font-family: 'Courier New', monospace;
+            flex-wrap: wrap;
+        }
+        .grand-row .grand-label { color: #333; }
+        .grand-row .grand-detail { color: #555; font-size: 15px; }
+        .grand-row .grand-salary { color: #27ae60; font-size: 24px; }
+
+        .download-current-btn {
+            margin-top: 18px;
+            width: 100%;
+            padding: 16px;
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.25);
+        }
+        .download-current-btn:hover { background: #219150; }
+        .download-current-btn:active { transform: translateY(1px); }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="brand">📒 计件宝</div>
+        <div class="worker-tag" id="workerTag" onclick="renameWorker()" title="点击修改名字">名字：张三</div>
+    </div>
+
+    <div class="book-bar">
+        <span class="label">当前账本</span>
+        <select id="historySelect" onchange="switchHistory()"></select>
+        <button class="primary" onclick="createNewBook()">➕ 新建</button>
+        <button onclick="renameCurrentBook()">✏️ 重命名</button>
+        <button onclick="document.getElementById('fileInputOne').click()">📂 上传当前账本</button>
+        <input type="file" id="fileInputOne" accept=".json" style="display:none;" onchange="importJSON(event, false)">
+        <button onclick="toggleSettings()">⚙️ 设置</button>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-row">
+            <span style="font-size:13px; color:#888; margin-right:6px;">全部账本：</span>
+            <button onclick="document.getElementById('fileInputAll').click()">📂 上传全部账本</button>
+            <input type="file" id="fileInputAll" accept=".json" style="display:none;" onchange="importJSON(event, true)">
+            <button onclick="exportJSONAll()">📥 下载全部账本</button>
+        </div>
+        <div class="settings-row">
+            <span style="font-size:13px; color:#888; margin-right:6px;">危险操作：</span>
+            <span class="danger-text" onclick="deleteCurrentBook()">🗑 删除当前账本</span>
+        </div>
+    </div>
+
+    <div class="paper-container">
+        <div class="config-area">
+            <div class="config-item">
+                <label>类别</label>
+                <select id="productType" onchange="onTypeChange()">
+                    <option value="上衣">上衣</option>
+                    <option value="裤子">裤子</option>
+                </select>
+            </div>
+            <div class="config-item">
+                <label>单价</label>
+                <input type="number" id="unitPrice" step="0.01" placeholder="1.5" oninput="onPriceChange()">
+                <span style="font-size:14px; color:#000000;">元/件</span>
+            </div>
+        </div>
+
+        <div class="title-wrapper">
+            <input type="text" class="title-input" id="pageTitle" placeholder="例如：2026年6月-7月" value="未命名记录">
+        </div>
+
+        <div class="row-container">
+            <div class="sum-column total-header" id="totalCountDisplay">0</div>
+            <div class="input-column"></div>
+        </div>
+        
+        <div id="rowsContainer"></div>
+        
+        <button class="add-row-btn" onclick="addRow()">+ 添加新行</button>
+        
+        <div class="summary-bar">
+            <!-- 当前类别公式 -->
+            <div class="summary-row">
+                <span class="total-count" id="totalCountForFormula">0</span>
+                <span>×</span>
+                <span class="unit-price" id="unitPriceForFormula">1.0</span>
+                <span>=</span>
+                <span class="total-salary" id="totalSalaryDisplay">0.00</span>
+                <span>元</span>
+            </div>
+            <!-- 当前账本总工资：上衣 + 裤子 -->
+            <div class="grand-row">
+                <span class="grand-label">当前账本总工资 =</span>
+                <span class="grand-detail" id="grandDetailText">上衣 0.00 + 裤子 0.00</span>
+                <span>=</span>
+                <span class="grand-salary" id="grandTotalDisplay">0.00</span>
+                <span>元</span>
+            </div>
+        </div>
+
+        <button class="download-current-btn" onclick="exportJSONOne()">📥 下载当前账本</button>
+    </div>
+
+<script>
+    // ================= 用户名字 =================
+    const WORKER_NAME_KEY = 'worker_jijian_worker_name';
+    let CURRENT_WORKER = localStorage.getItem(WORKER_NAME_KEY) || '张三';
+
+    function renameWorker() {
+        const newName = prompt('请输入你的名字：', CURRENT_WORKER);
+        if (newName === null) return;
+        const trimmed = newName.trim();
+        if (trimmed === '') { alert('名字不能为空。'); return; }
+        if (trimmed === CURRENT_WORKER) return;
+
+        saveToLocal();
+        const oldData = localStorage.getItem(`worker_${CURRENT_WORKER}_independent`);
+        if (oldData) {
+            localStorage.setItem(`worker_${trimmed}_independent`, oldData);
+            localStorage.removeItem(`worker_${CURRENT_WORKER}_independent`);
+        }
+        CURRENT_WORKER = trimmed;
+        localStorage.setItem(WORKER_NAME_KEY, CURRENT_WORKER);
+        loadFromLocal();
+        document.getElementById('workerTag').innerText = `名字：${CURRENT_WORKER}`;
+        currentBookId = Object.keys(allData)[0] || "default";
+        currentType = "上衣";
+        renderCurrentPage();
+        alert(`名字已修改为：${CURRENT_WORKER}，你的数据已一并迁移。`);
+    }
+
+    function updateWorkerTag() {
+        document.getElementById('workerTag').innerText = `名字：${CURRENT_WORKER}`;
+    }
+
+    function toggleSettings() {
+        const panel = document.getElementById('settingsPanel');
+        panel.classList.toggle('open');
+    }
+
+    // ================= 核心数据结构 =================
+    let allData = {};
+    let currentBookId = "default";
+    let currentType = "上衣";
+
+    function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+    function createDefaultBook() {
+        return {
+            title: "新账本",
+            上衣: { unitPrice: 1.5, rows: [{ id: generateId(), inputValue: '' }] },
+            裤子: { unitPrice: 1.0, rows: [{ id: generateId(), inputValue: '' }] }
+        };
+    }
+
+    function saveToLocal() {
+        localStorage.setItem(`worker_${CURRENT_WORKER}_independent`, JSON.stringify(allData));
+    }
+
+    function loadFromLocal() {
+        const saved = localStorage.getItem(`worker_${CURRENT_WORKER}_independent`);
+        if (saved) {
+            try { allData = JSON.parse(saved); } catch(e) { console.error(e); }
+        } else {
+            allData = { "default": createDefaultBook() };
+        }
+    }
+
+    function getCurrentBook() {
+        if (!allData[currentBookId]) {
+            allData[currentBookId] = createDefaultBook();
+        }
+        return allData[currentBookId];
+    }
+
+    function getCurrentCategory() {
+        const book = getCurrentBook();
+        if (!book[currentType]) {
+            book[currentType] = { unitPrice: currentType === '上衣' ? 1.5 : 1.0, rows: [{ id: generateId(), inputValue: '' }] };
+        }
+        return book[currentType];
+    }
+
+    // ================= 渲染 =================
+    function renderCurrentPage() {
+        updateWorkerTag();
+        const book = getCurrentBook();
+        const category = getCurrentCategory();
+
+        document.getElementById('productType').value = currentType;
+        document.getElementById('unitPrice').value = category.unitPrice;
+        document.getElementById('pageTitle').value = book.title;
+        renderHistorySelect();
+
+        const container = document.getElementById('rowsContainer');
+        container.innerHTML = '';
+
+        category.rows.forEach((row, index) => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'row-container';
+            const leftSum = document.createElement('div');
+            leftSum.className = 'sum-column';
+            leftSum.innerText = calculateRowSum(row.inputValue) || '';
+
+            const inputDiv = document.createElement('div');
+            inputDiv.className = 'input-column';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = '输入数字，空格或逗号隔开';
+            input.value = row.inputValue;
+            input.setAttribute('inputmode', 'numeric');
+            
+            input.addEventListener('input', (e) => {
+                row.inputValue = e.target.value;
+                leftSum.innerText = calculateRowSum(row.inputValue) || '';
+                updateTotal();
+                saveToLocal();
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (index === category.rows.length - 1) {
+                        category.rows.push({ id: generateId(), inputValue: '' });
+                        saveToLocal();
+                        renderCurrentPage(); 
+                        setTimeout(() => {
+                            const allInputs = document.querySelectorAll('.input-column input');
+                            if (allInputs.length > 0) allInputs[allInputs.length - 1].focus();
+                        }, 10);
+                    } else {
+                        const allInputs = document.querySelectorAll('.input-column input');
+                        if (allInputs[index + 1]) allInputs[index + 1].focus();
+                    }
+                }
+            });
+
+            inputDiv.appendChild(input);
+            rowDiv.appendChild(leftSum);
+            rowDiv.appendChild(inputDiv);
+            container.appendChild(rowDiv);
+        });
+        updateTotal();
+    }
+
+    function renderHistorySelect() {
+        const select = document.getElementById('historySelect');
+        select.innerHTML = '';
+        Object.keys(allData).forEach(id => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.text = allData[id].title || id;
+            if (id === currentBookId) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    function switchHistory() {
+        currentBookId = document.getElementById('historySelect').value;
+        renderCurrentPage();
+    }
+
+    // ================= 计算 =================
+    function calcCategorySalary(book, type) {
+        const category = book[type];
+        if (!category || !category.rows) return 0;
+        let totalCount = 0;
+        category.rows.forEach(row => { totalCount += calculateRowSum(row.inputValue); });
+        const unitPrice = parseFloat(category.unitPrice) || 0;
+        return totalCount * unitPrice;
+    }
+
+    function updateTotal() {
+        const book = getCurrentBook();
+        const category = getCurrentCategory();
+
+        // 当前类别公式
+        let totalCount = 0;
+        category.rows.forEach(row => { totalCount += calculateRowSum(row.inputValue); });
+        const unitPrice = parseFloat(category.unitPrice) || 0;
+        const totalSalary = (totalCount * unitPrice).toFixed(2);
+
+        document.getElementById('totalCountDisplay').innerText = totalCount;
+        document.getElementById('totalCountForFormula').innerText = totalCount;
+        document.getElementById('unitPriceForFormula').innerText = unitPrice;
+        document.getElementById('totalSalaryDisplay').innerText = totalSalary;
+
+        // 当前账本总工资 = 上衣 + 裤子（只算这一个账本，不累加其他账本）
+        const topSalary = calcCategorySalary(book, '上衣');
+        const pantsSalary = calcCategorySalary(book, '裤子');
+        const grandTotal = (topSalary + pantsSalary).toFixed(2);
+
+        document.getElementById('grandDetailText').innerText =
+            `上衣 ${topSalary.toFixed(2)} + 裤子 ${pantsSalary.toFixed(2)}`;
+        document.getElementById('grandTotalDisplay').innerText = grandTotal;
+    }
+
+    function calculateRowSum(str) {
+        if (!str || str.trim() === '') return 0;
+        const parts = str.replace(/[，,\s]+/g, ',').split(',');
+        let sum = 0;
+        parts.forEach(p => { const num = parseFloat(p.trim()); if (!isNaN(num)) sum += num; });
+        return sum;
+    }
+
+    // ================= 事件 =================
+    function onTypeChange() {
+        currentType = document.getElementById('productType').value;
+        renderCurrentPage();
+    }
+
+    function onPriceChange() {
+        const category = getCurrentCategory();
+        category.unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+        saveToLocal();
+        updateTotal();
+    }
+
+    function createNewBook() {
+        const title = prompt('请输入新账本的名称（如：6月、7月）：', `新账本 ${new Date().toLocaleDateString()}`);
+        if (title === null) return;
+        const newId = generateId();
+        allData[newId] = {
+            title: title || `新账本`,
+            上衣: { unitPrice: 1.5, rows: [{ id: generateId(), inputValue: '' }] },
+            裤子: { unitPrice: 1.0, rows: [{ id: generateId(), inputValue: '' }] }
+        };
+        currentBookId = newId;
+        currentType = "上衣";
+        saveToLocal();
+        renderCurrentPage();
+    }
+
+    function renameCurrentBook() {
+        const book = getCurrentBook();
+        const oldTitle = book.title || '未命名账本';
+        const newTitle = prompt('请输入新的账本名称：', oldTitle);
+        if (newTitle === null) return;
+        const trimmedTitle = newTitle.trim();
+        if (trimmedTitle === '') { alert('账本名称不能为空。'); return; }
+        if (trimmedTitle === oldTitle) return;
+        book.title = trimmedTitle;
+        saveToLocal();
+        renderCurrentPage();
+        alert(`账本已重命名为：${trimmedTitle}`);
+    }
+
+    function deleteCurrentBook() {
+        const bookIds = Object.keys(allData);
+        if (bookIds.length <= 1) { alert('至少需要保留一个账本，无法删除。'); return; }
+
+        const book = getCurrentBook();
+        const bookTitle = book.title || '未命名账本';
+        if (!confirm(`确定要删除「${bookTitle}」这个账本吗？\n\n删除后该账本的所有数据将无法恢复！`)) return;
+
+        delete allData[currentBookId];
+
+        currentBookId = Object.keys(allData)[0];
+        if (!allData[currentBookId].title) allData[currentBookId].title = '未命名账本';
+        if (!allData[currentBookId]["上衣"]) allData[currentBookId]["上衣"] = { unitPrice: 1.5, rows: [{ id: generateId(), inputValue: '' }] };
+        if (!allData[currentBookId]["裤子"]) allData[currentBookId]["裤子"] = { unitPrice: 1.0, rows: [{ id: generateId(), inputValue: '' }] };
+
+        currentType = "上衣";
+        saveToLocal();
+        renderCurrentPage();
+
+        document.getElementById('historySelect').value = currentBookId;
+        document.getElementById('pageTitle').value = allData[currentBookId].title;
+
+        document.getElementById('settingsPanel').classList.remove('open');
+
+        alert('账本已删除。');
+    }
+
+    document.getElementById('pageTitle').addEventListener('input', (e) => {
+        const book = getCurrentBook();
+        book.title = e.target.value;
+        saveToLocal();
+        renderHistorySelect();
+    });
+
+    function addRow() {
+        const category = getCurrentCategory();
+        category.rows.push({ id: generateId(), inputValue: '' });
+        saveToLocal();
+        renderCurrentPage();
+    }
+
+    // ================= 下载全部账本 =================
+    function exportJSONAll() {
+        const exportData = {
+            worker: CURRENT_WORKER,
+            exportTime: new Date().toISOString(),
+            allData: allData
+        };
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const fileName = `${CURRENT_WORKER}_全部账本_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+        downloadJSON(jsonStr, fileName);
+    }
+
+    // ================= 下载当前账本 =================
+    function exportJSONOne() {
+        const book = getCurrentBook();
+        const bookTitle = book.title || '未命名账本';
+        const exportData = {
+            worker: CURRENT_WORKER,
+            exportTime: new Date().toISOString(),
+            singleBook: true,
+            book: book
+        };
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const safeTitle = bookTitle.replace(/[\/\\:*?"<>|]/g, '_');
+        const fileName = `${CURRENT_WORKER}_${safeTitle}.json`;
+        downloadJSON(jsonStr, fileName);
+    }
+
+    function downloadJSON(jsonStr, fileName) {
+        const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ================= 上传账本 =================
+    function importJSON(event, isFullBackup) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            let parsed;
+            try {
+                parsed = JSON.parse(e.target.result);
+            } catch (err) {
+                alert('文件格式不对，无法解析。');
+                event.target.value = '';
+                return;
+            }
+
+            const workerName = parsed.worker || '未知';
+            const exportTime = parsed.exportTime ? new Date(parsed.exportTime).toLocaleString() : '未知时间';
+
+            if (workerName !== '未知' && workerName !== CURRENT_WORKER) {
+                const confirmed = confirm(`这份备份属于「${workerName}」，而当前工人是「${CURRENT_WORKER}」。\n\n确定要把它导入到「${CURRENT_WORKER}」名下吗？`);
+                if (!confirmed) { event.target.value = ''; return; }
+            }
+
+            if (isFullBackup) {
+                if (!parsed.allData) {
+                    alert('这个文件不是“全部账本”备份文件，请检查。');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (!confirm(`即将导入「${workerName}」的全部账本（导出时间：${exportTime}）。\n\n这会覆盖当前所有数据，确定吗？`)) {
+                    event.target.value = '';
+                    return;
+                }
+
+                allData = parsed.allData;
+
+                Object.keys(allData).forEach(id => {
+                    const book = allData[id];
+                    if (!book.title) book.title = "未命名账本";
+                    if (!book["上衣"]) book["上衣"] = { unitPrice: 1.5, rows: [{ id: generateId(), inputValue: '' }] };
+                    if (!book["裤子"]) book["裤子"] = { unitPrice: 1.0, rows: [{ id: generateId(), inputValue: '' }] };
+                });
+
+                const seenTitles = {};
+                Object.keys(allData).forEach(id => {
+                    const book = allData[id];
+                    let title = book.title;
+                    if (seenTitles[title]) {
+                        let counter = 2;
+                        let newTitle = `${title}(${counter})`;
+                        while (seenTitles[newTitle]) { counter++; newTitle = `${title}(${counter})`; }
+                        book.title = newTitle;
+                        seenTitles[newTitle] = true;
+                    } else {
+                        seenTitles[title] = true;
+                    }
+                });
+
+                currentBookId = allData["default"] ? "default" : Object.keys(allData)[0];
+                currentType = "上衣";
+
+                saveToLocal();
+                renderCurrentPage();
+                document.getElementById('historySelect').value = currentBookId;
+                document.getElementById('pageTitle').value = allData[currentBookId].title;
+
+                alert('导入成功！所有账本已恢复。');
+                event.target.value = '';
+                return;
+            }
+
+            if (!parsed.book) {
+                alert('这个文件不是“当前账本”文件，请检查。');
+                event.target.value = '';
+                return;
+            }
+
+            const book = parsed.book;
+            if (!book.title) book.title = '导入的账本';
+            if (!book["上衣"]) book["上衣"] = { unitPrice: 1.5, rows: [{ id: generateId(), inputValue: '' }] };
+            if (!book["裤子"]) book["裤子"] = { unitPrice: 1.0, rows: [{ id: generateId(), inputValue: '' }] };
+
+            let existingId = null;
+            Object.keys(allData).forEach(id => {
+                if (allData[id].title === book.title) existingId = id;
+            });
+
+            if (existingId) {
+                if (!confirm(`本地已有一个「${book.title}」账本，上传后会用新数据覆盖旧数据，确定吗？`)) {
+                    event.target.value = '';
+                    return;
+                }
+                allData[existingId] = book;
+                currentBookId = existingId;
+            } else {
+                if (!confirm(`即将导入「${workerName}」的账本「${book.title}」（导出时间：${exportTime}）。\n\n这个账本会作为一个新账本添加进来。确定吗？`)) {
+                    event.target.value = '';
+                    return;
+                }
+                const newId = generateId();
+                allData[newId] = book;
+                currentBookId = newId;
+            }
+
+            currentType = "上衣";
+            saveToLocal();
+            renderCurrentPage();
+            document.getElementById('historySelect').value = currentBookId;
+            document.getElementById('pageTitle').value = allData[currentBookId].title;
+
+            alert('导入成功！');
+            event.target.value = '';
+        };
+
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    // ================= 启动 =================
+    function init() {
+        loadFromLocal();
+        if (Object.keys(allData).length === 0) {
+            allData = { "default": createDefaultBook() };
+        }
+        currentBookId = Object.keys(allData)[0];
+        currentType = "上衣";
+        renderCurrentPage();
+    }
+
+    init();
+</script>
+</body>
+</html>

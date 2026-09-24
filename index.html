@@ -196,10 +196,8 @@
 
         /* ==================== 小屏幕（手机）适配 ==================== */
         @media (max-width: 600px) {
-            /* 纸面四周缩小内边距 */
             .paper-container { padding: 20px 16px 24px 16px; }
 
-            /* 左侧合计列：贴左、变窄 */
             .sum-column {
                 width: 52px;
                 padding-right: 6px;
@@ -209,17 +207,20 @@
                 font-size: 14px;
             }
 
-            /* 输入的数字：缩小到约 65% */
+            /* 输入框触控区扩大：视觉字号仍是 12px，但透明触控区恢复到正常水平 */
+            .input-column {
+                overflow: hidden;
+            }
             .input-column input {
                 font-size: 12px;
                 letter-spacing: 0px;
-                padding: 0 6px;
+                /* 左 12px、右 12px 的透明触控区，视觉上只影响触控，不影响文字位置太多 */
+                padding: 0 12px;
             }
             .input-column input::placeholder {
                 font-size: 11px;
             }
 
-            /* 底部公式稍紧凑一点 */
             .summary-row { font-size: 16px; }
             .summary-row .total-salary { font-size: 18px; }
             .grand-row { font-size: 15px; }

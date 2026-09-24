@@ -193,6 +193,39 @@
         }
         .download-current-btn:hover { background: #219150; }
         .download-current-btn:active { transform: translateY(1px); }
+
+        /* ==================== 小屏幕（手机）适配 ==================== */
+        @media (max-width: 600px) {
+            /* 纸面四周缩小内边距 */
+            .paper-container { padding: 20px 16px 24px 16px; }
+
+            /* 左侧合计列：贴左、变窄 */
+            .sum-column {
+                width: 52px;
+                padding-right: 6px;
+                font-size: 16px;
+            }
+            .sum-column.total-header {
+                font-size: 14px;
+            }
+
+            /* 输入的数字：缩小到约 65% */
+            .input-column input {
+                font-size: 12px;
+                letter-spacing: 0px;
+                padding: 0 6px;
+            }
+            .input-column input::placeholder {
+                font-size: 11px;
+            }
+
+            /* 底部公式稍紧凑一点 */
+            .summary-row { font-size: 16px; }
+            .summary-row .total-salary { font-size: 18px; }
+            .grand-row { font-size: 15px; }
+            .grand-row .grand-detail { font-size: 13px; }
+            .grand-row .grand-salary { font-size: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -255,7 +288,6 @@
         <button class="add-row-btn" onclick="addRow()">+ 添加新行</button>
         
         <div class="summary-bar">
-            <!-- 当前类别公式 -->
             <div class="summary-row">
                 <span class="total-count" id="totalCountForFormula">0</span>
                 <span>×</span>
@@ -264,7 +296,6 @@
                 <span class="total-salary" id="totalSalaryDisplay">0.00</span>
                 <span>元</span>
             </div>
-            <!-- 当前账本总工资：上衣 + 裤子 -->
             <div class="grand-row">
                 <span class="grand-label">当前账本总工资 =</span>
                 <span class="grand-detail" id="grandDetailText">上衣 0.00 + 裤子 0.00</span>
@@ -450,7 +481,6 @@
         const book = getCurrentBook();
         const category = getCurrentCategory();
 
-        // 当前类别公式
         let totalCount = 0;
         category.rows.forEach(row => { totalCount += calculateRowSum(row.inputValue); });
         const unitPrice = parseFloat(category.unitPrice) || 0;
@@ -461,7 +491,6 @@
         document.getElementById('unitPriceForFormula').innerText = unitPrice;
         document.getElementById('totalSalaryDisplay').innerText = totalSalary;
 
-        // 当前账本总工资 = 上衣 + 裤子（只算这一个账本，不累加其他账本）
         const topSalary = calcCategorySalary(book, '上衣');
         const pantsSalary = calcCategorySalary(book, '裤子');
         const grandTotal = (topSalary + pantsSalary).toFixed(2);
